@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    unique: true,
+    trim: true,
+    required: [true, "User must enter a password!"],
+  },
   name: String,
   password: { type: String, required: [true, "User must enter a password!"] },
   date: { type: Date, default: Date.now },
