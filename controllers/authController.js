@@ -1,5 +1,12 @@
 const User = require(`${__dirname}/../models/userModel`);
 const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
+
+const signToken = (id) => {
+  return jwt.sign({ id: id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
 
 exports.signup = async (req, res) => {
   try {
@@ -21,9 +28,7 @@ exports.signup = async (req, res) => {
     const newUser = await User.create({ email, password, passwordConfirm });
 
     // 4)Create jwt
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
+    const token = signToken(newUser._id);
 
     res.status(200).json({
       status: "Success:User was created!",
@@ -61,9 +66,7 @@ exports.login = async (req, res) => {
     }
 
     // 4)Create jwt
-    const token = jwt.sign({ id: userToLogin._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
+    const token = signToken(userToLogin._id);
 
     // 5)Send okay to client
     res.status(200).json({
@@ -74,5 +77,42 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ status: "User login failed!", err: err.message });
+  }
+};
+
+exports.protectRoutes = async (req, res, next) => {
+  try {
+    // 1)Get token and check if it exist
+    let token;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    // 2)Verification of token
+    if (!token) {
+      throw new Error("User does not has a token. Please log in!");
+    }
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+    // 3)Check if user still existes
+    const userExist = await User.findById(decoded.id);
+    if (!userExist) {
+      throw new Error("User no longer exists!");
+    }
+
+    // 4)Check if user changed password after the jwt was issued
+    if (userExist.changedPasswordAfter(decoded.iat)) {
+      throw new Error("Token no longer valid, user changed password!");
+    }
+
+    // Access granted to protected route
+    req.user = userExist;
+    next();
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ status: "Route access denied!", err: err.message });
   }
 };

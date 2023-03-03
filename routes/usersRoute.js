@@ -2,12 +2,9 @@ const express = require("express");
 const router = express.Router();
 
 const authController = require(`${__dirname}/../controllers/authController`);
+const userController = require(`${__dirname}/../controllers/userController`);
 
-router.get("/", (req, res) => {
-  res
-    .status(200)
-    .json({ status: "You hit the /users route from the habitus backend" });
-});
+router.route("/").get(authController.protectRoutes, userController.getAllUsers);
 
 router.post("/signup", authController.signup);
 

@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
     minLength: 8,
     required: [true, "User must enter a password!"],
   },
+  passwordChangedAt: { type: Date },
   userCreationDate: { type: Date, default: Date.now },
   habits: {
     type: [String],
@@ -51,6 +52,16 @@ userSchema.methods.correctPassword = async function (
   enteredPassword
 ) {
   return await bcrypt.compare(enteredPassword, dbPassword);
+};
+
+userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
+  if (this.passwordChangedAt) {
+    const passwordChangedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000
+    );
+    return jwtTimestamp < passwordChangedTimestamp;
+  }
+  return false;
 };
 
 const User = mongoose.model("User", userSchema);
