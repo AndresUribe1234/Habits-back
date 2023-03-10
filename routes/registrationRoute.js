@@ -6,6 +6,10 @@ const registrationController = require(`${__dirname}/../controllers/registration
 
 router
   .route("/")
+  .get(
+    authController.protectRoutes,
+    registrationController.getAllUserRegistrations
+  )
   .post(authController.protectRoutes, registrationController.createNewHabit);
 
 module.exports = router;
