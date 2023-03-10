@@ -16,9 +16,32 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+exports.getUserById = async (req, res) => {
+  try {
+    // 1) Get unique identifier of user
+    const { email } = req.params;
+
+    // 2)Check if user exist
+    const userRequested = await User.findOne({ email: email });
+    if (!userRequested) {
+      throw new Error("User does not exist!");
+    }
+
+    // 3)Return user
+    res.status(200).json({
+      status: "Success:User requested was fetched!",
+      data: { user: userRequested },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ status: "Could not fetch user!", err: err.message });
+  }
+};
+
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { email, name, habits } = req.body;
+    const { email } = req.params;
+    const { name, habits } = req.body;
 
     // 1) Find user to update
     const usertToUpdate = await User.findOne({ email: email });

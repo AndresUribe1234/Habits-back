@@ -34,8 +34,10 @@ app.use(morgan("dev"));
 
 // Backend routes
 const userRouter = require("./routes/usersRoute");
+const registrationRouter = require("./routes/registrationRoute");
 
 app.use("/api/users", userRouter);
+app.use("/api/registration", registrationRouter);
 
 const server = app.listen(PORT, () =>
   console.log(`Server running on PORT ${PORT}`)
