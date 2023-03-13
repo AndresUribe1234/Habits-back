@@ -4,7 +4,7 @@ const habitsRegistrationSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
-    required: [true, "Review must belong to a user"],
+    required: [true, "Registration must belong to a user"],
   },
   userHabitsGoalDayRegistration: {
     type: [String],
@@ -20,6 +20,10 @@ const habitsRegistrationSchema = new mongoose.Schema({
   completionStatus: String,
   registrationCreationDate: { type: Date, default: Date.now },
   registrationModificationDate: { type: Date, default: undefined },
+  registrationFinalDate: {
+    type: Date,
+    required: [true, "Registration needs to have a date"],
+  },
 });
 
 // Setting completion percentage and status fields

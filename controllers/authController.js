@@ -1,7 +1,6 @@
 const User = require(`${__dirname}/../models/userModel`);
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
-const emailAWS = require(`${__dirname}/../util/emailaws`);
 
 const signToken = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -112,15 +111,5 @@ exports.protectRoutes = async (req, res, next) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ status: "Route access denied!", err: err.message });
-  }
-};
-
-exports.passwordReset = async (req, res) => {
-  try {
-    // Using aws
-    // const hello = await emailAWS.sendEmail("habittusdev@gmail.com", "andres");
-    res.status(200).json({ message: "Success:Email sent from nodejs!" });
-  } catch (err) {
-    console.log(err);
   }
 };
