@@ -10,7 +10,7 @@ const PORT = 8000;
 
 dotenv.config({ path: `./config.env` });
 
-app.use(cors());
+app.use(cors({ origin: "*" }));
 
 // Connection to DB
 const DB = process.env.DATABASE.replace(
