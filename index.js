@@ -38,6 +38,9 @@ const registrationRouter = require("./routes/registrationRoute");
 
 app.use("/api/users", userRouter);
 app.use("/api/registration", registrationRouter);
+app.get("/", (req, res) => {
+  res.send("Express JS on Vercel for habittus app :)");
+});
 
 const server = app.listen(PORT, () =>
   console.log(`Server running on PORT ${PORT}`)
