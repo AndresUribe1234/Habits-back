@@ -18,7 +18,7 @@ const habitsRegistrationSchema = new mongoose.Schema({
   },
   completionPercentage: Number,
   completionStatus: String,
-  registrationCreationDate: { type: Date, default: Date.now },
+  registrationCreationDate: { type: Date },
   registrationModificationDate: { type: Date, default: undefined },
   registrationFinalDate: {
     type: Date,
@@ -27,7 +27,7 @@ const habitsRegistrationSchema = new mongoose.Schema({
 });
 
 // Setting completion percentage and status fields
-habitsRegistrationSchema.pre("save", async function (next) {
+habitsRegistrationSchema.pre("save", function (next) {
   //   Get values for habits done and habits that user should done
   const numHabitsAchieved = this.userHabitsAchievedDayRegistration.length;
   const numHabitsGoal = this.userHabitsGoalDayRegistration.length;
@@ -47,10 +47,21 @@ habitsRegistrationSchema.pre("save", async function (next) {
   next();
 });
 
+// Date creation and modifications timestamps
+habitsRegistrationSchema.pre("save", function (next) {
+  if (!this.registrationCreationDate) {
+    this.registrationCreationDate = Date.now();
+  } else {
+    this.registrationModificationDate = Date.now();
+  }
+
+  next();
+});
+
 habitsRegistrationSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "name",
+    select: ["name", "email"],
   });
 
   next();

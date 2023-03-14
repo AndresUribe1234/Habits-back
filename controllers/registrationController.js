@@ -1,4 +1,5 @@
 const Registration = require("../models/habitsRegistrationModel");
+const { findById } = require("../models/userModel");
 
 exports.createNewHabit = async (req, res) => {
   try {
@@ -45,7 +46,9 @@ exports.getAllUserRegistrations = async (req, res) => {
     // 1) Get user id
     const { _id } = req.user;
     // 2) Find all user entries
-    const allRegistrations = await Registration.find({ user: _id });
+    const allRegistrations = await Registration.find({ user: _id }).sort({
+      registrationFinalDate: -1,
+    });
     // 3) Send data to client
     res.status(200).json({
       status: "Success:All user habits tracking entries where fetched!",
@@ -62,7 +65,9 @@ exports.getAllUserRegistrations = async (req, res) => {
 exports.getAllAppRegistrations = async (req, res) => {
   try {
     // 1) Find all app entries
-    const allRegistrations = await Registration.find();
+    const allRegistrations = await Registration.find().sort({
+      registrationFinalDate: -1,
+    });
     // 3) Send data to client
     res.status(200).json({
       status: "Success:All app user habits tracking entries where fetched!",
@@ -74,4 +79,41 @@ exports.getAllAppRegistrations = async (req, res) => {
       err: err.message,
     });
   }
+};
+
+exports.getRegistrationById = async (req, res) => {
+  // 1) Get habit entry id
+  const { id } = req.params;
+  // 2) Fetch entry by id
+  const entry = await Registration.findById(id);
+  // 3) Deliver response to client
+  res.status(200).json({
+    status: "Success:Entry fetched!",
+    data: { entry },
+  });
+  try {
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not fetch data!",
+      err: err.message,
+    });
+  }
+};
+
+exports.editRegistrationById = async (req, res) => {
+  try {
+    // 1) Get habit entry id and body
+    const { id } = req.params;
+    const { habits } = req.body;
+    // 2) Fetch entry by id
+    const entry = await Registration.findById(id);
+    // 3) Update registration
+    entry.userHabitsAchievedDayRegistration = habits;
+    await entry.save();
+    // 4) Deliver response to client
+    res.status(200).json({
+      status: "Success:Entry updated!",
+      data: { entry },
+    });
+  } catch (err) {}
 };
