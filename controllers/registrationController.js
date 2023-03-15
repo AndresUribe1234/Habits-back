@@ -115,5 +115,10 @@ exports.editRegistrationById = async (req, res) => {
       status: "Success:Entry updated!",
       data: { entry },
     });
-  } catch (err) {}
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not fetch data!",
+      err: err.message,
+    });
+  }
 };

@@ -53,6 +53,8 @@ exports.login = async (req, res) => {
       "+password"
     );
 
+    if (!userToLogin) throw new Error("Incorrect user or password!");
+
     const correct = await userToLogin.correctPassword(
       userToLogin.password,
       password

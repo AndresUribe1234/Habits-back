@@ -54,6 +54,14 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(enteredPassword, dbPassword);
 };
 
+userSchema.post("save", function (error, doc, next) {
+  if (error.code === 11000) {
+    next(new Error("User with this email already existes!"));
+  } else {
+    next(error);
+  }
+});
+
 userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
   if (this.passwordChangedAt) {
     const passwordChangedTimestamp = parseInt(
