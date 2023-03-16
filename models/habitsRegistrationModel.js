@@ -26,6 +26,17 @@ const habitsRegistrationSchema = new mongoose.Schema({
   },
 });
 
+// Date creation and modifications timestamps
+habitsRegistrationSchema.pre("save", function (next) {
+  if (!this.registrationCreationDate) {
+    this.registrationCreationDate = Date.now();
+  } else {
+    this.registrationModificationDate = Date.now();
+  }
+
+  next();
+});
+
 // Setting completion percentage and status fields
 habitsRegistrationSchema.pre("save", function (next) {
   //   Get values for habits done and habits that user should done
@@ -40,19 +51,23 @@ habitsRegistrationSchema.pre("save", function (next) {
   if (completionPercentage === 1) {
     this.completionStatus = "Success";
   }
-  if (completionPercentage !== 1) {
+
+  const dateEntered = this.registrationFinalDate;
+  //   Timezone option states what TZ is desired. If left UTC theres no change because dates are supposed to be on UTC.
+  const dateEnteredString = dateEntered.toLocaleDateString("en-GB", {
+    timeZone: "UTC",
+  });
+  //   Creation date on UTC
+  const dateToCompare = new Date();
+  //   Local time zone in GB date format: dd-mm-yyyy
+  const dateColombianTz = dateToCompare.toLocaleDateString("en-GB");
+  console.log(dateColombianTz, dateEnteredString);
+
+  if (completionPercentage !== 1 && dateEnteredString === dateColombianTz) {
     this.completionStatus = "In progress";
   }
-
-  next();
-});
-
-// Date creation and modifications timestamps
-habitsRegistrationSchema.pre("save", function (next) {
-  if (!this.registrationCreationDate) {
-    this.registrationCreationDate = Date.now();
-  } else {
-    this.registrationModificationDate = Date.now();
+  if (completionPercentage !== 1 && dateEnteredString !== dateColombianTz) {
+    this.completionStatus = "Next time you will do better";
   }
 
   next();
