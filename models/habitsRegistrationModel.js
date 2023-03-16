@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const moment = require("moment");
+const tz = require("moment-timezone");
 
 const habitsRegistrationSchema = new mongoose.Schema({
   user: {
@@ -24,6 +26,7 @@ const habitsRegistrationSchema = new mongoose.Schema({
     type: Date,
     required: [true, "Registration needs to have a date"],
   },
+  currentStreak: Number,
 });
 
 // Date creation and modifications timestamps
@@ -52,23 +55,36 @@ habitsRegistrationSchema.pre("save", function (next) {
     this.completionStatus = "Success";
   }
 
-  const dateEntered = this.registrationFinalDate;
-  //   Timezone option states what TZ is desired. If left UTC theres no change because dates are supposed to be on UTC.
-  const dateEnteredString = dateEntered.toLocaleDateString("en-GB", {
-    timeZone: "UTC",
-  });
-  //   Creation date on UTC
-  const dateToCompare = new Date();
-  //   Local time zone in GB date format: dd-mm-yyyy
-  const dateColombianTz = dateToCompare.toLocaleDateString("en-GB");
-  console.log(dateColombianTz, dateEnteredString);
+  // Formating corresponding registration date
+  const dateEnteredMoment = moment
+    .utc(this.registrationFinalDate)
+    .format("YYYY-MM-DD");
+  console.log(dateEnteredMoment);
 
-  if (completionPercentage !== 1 && dateEnteredString === dateColombianTz) {
+  //   Creating a date to compare entered date in order to see if it matches the same day in col tz
+  const dateToCompareMoment = moment
+    .utc()
+    .tz("America/Bogota")
+    .format("YYYY-MM-DD");
+
+  if (completionPercentage !== 1 && dateEnteredMoment === dateToCompareMoment) {
     this.completionStatus = "In progress";
   }
-  if (completionPercentage !== 1 && dateEnteredString !== dateColombianTz) {
+  if (completionPercentage !== 1 && dateEnteredMoment !== dateToCompareMoment) {
     this.completionStatus = "Next time you will do better";
   }
+
+  next();
+});
+
+// Setting current streak
+habitsRegistrationSchema.pre("save", function (next) {
+  const nows = moment();
+  console.log(nows);
+  console.log(nows.utc());
+  console.log(nows.utc().tz("America/Bogota"));
+
+  console.log(nows.add(1, "week"));
 
   next();
 });
