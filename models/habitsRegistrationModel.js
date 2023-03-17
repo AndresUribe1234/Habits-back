@@ -77,18 +77,6 @@ habitsRegistrationSchema.pre("save", function (next) {
   next();
 });
 
-// Setting current streak
-habitsRegistrationSchema.pre("save", function (next) {
-  const nows = moment();
-  console.log(nows);
-  console.log(nows.utc());
-  console.log(nows.utc().tz("America/Bogota"));
-
-  console.log(nows.add(1, "week"));
-
-  next();
-});
-
 habitsRegistrationSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",

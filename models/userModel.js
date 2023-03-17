@@ -33,9 +33,16 @@ const userSchema = new mongoose.Schema({
     default: undefined,
     required: [false, "User must enter his/hers habits"],
   },
+  currentStreak: Number,
+  dateEndCurrentStreak: Date,
+  dateBeginningCurrentStreak: Date,
+  longestStreak: Number,
+  dateEndLongestStreak: Date,
+  dateBeginningLongestStreak: Date,
 });
 
-async function cryptPassword(next) {
+// Crypt password
+userSchema.pre("save", async function cryptPassword(next) {
   // Check so this ONLY runs when making a change to the password. This guard clause returns if other field is being modified.
   if (!this.isModified("password")) return next();
   //   Hash de password with cost of 12
@@ -43,10 +50,9 @@ async function cryptPassword(next) {
   //   Delete passwordConfirm field
   this.passwordConfirm = undefined;
   next();
-}
+});
 
-userSchema.pre("save", cryptPassword);
-
+// Correct passwrod function, returns true if same
 userSchema.methods.correctPassword = async function (
   dbPassword,
   enteredPassword
@@ -54,6 +60,7 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(enteredPassword, dbPassword);
 };
 
+// Changes duplicate email error message
 userSchema.post("save", function (error, doc, next) {
   if (error.code === 11000) {
     next(new Error("User with this email already existes!"));
@@ -62,6 +69,7 @@ userSchema.post("save", function (error, doc, next) {
   }
 });
 
+// Return if password was changed after token creation to see if its valid
 userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
   if (this.passwordChangedAt) {
     const passwordChangedTimestamp = parseInt(

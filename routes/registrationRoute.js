@@ -31,4 +31,8 @@ router
     registrationController.editRegistrationById
   );
 
+router
+  .route("/test")
+  .get(authController.protectRoutes, registrationController.setCurrentStreak);
+
 module.exports = router;
