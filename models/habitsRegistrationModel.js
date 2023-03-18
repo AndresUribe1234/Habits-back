@@ -27,6 +27,8 @@ const habitsRegistrationSchema = new mongoose.Schema({
     required: [true, "Registration needs to have a date"],
   },
   currentStreak: Number,
+  dateEndCurrentStreak: Date,
+  dateBeginningCurrentStreak: Date,
 });
 
 // Date creation and modifications timestamps
