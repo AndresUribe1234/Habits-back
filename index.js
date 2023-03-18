@@ -3,6 +3,10 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const morgan = require("morgan");
+const cron = require("node-cron");
+const moment = require("moment");
+
+const scheduleFunctions = require("./util/scheduleFunctions");
 
 // App creation
 const app = express();
@@ -40,6 +44,11 @@ app.use("/api/users", userRouter);
 app.use("/api/registration", registrationRouter);
 app.get("/", (req, res) => {
   res.send("Express JS on Vercel for habittus app :)");
+});
+
+// Scheduling a simple task with node cron
+cron.schedule("0 15 0 * * *", scheduleFunctions.changingStatusEachDay, {
+  timezone: "America/Bogota",
 });
 
 const server = app.listen(PORT, () =>

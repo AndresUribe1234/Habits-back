@@ -190,3 +190,18 @@ exports.setLongestStreak = async (req, res, next) => {
     });
   }
 };
+
+exports.setRegistrationCurrentStreak = async (req, res, next) => {
+  try {
+    // 3)Send response to client
+    res.status(200).json({
+      status: "Success:User current streak for registration was calculated!",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "Could not calculate registration day current streak!",
+      err: err.message,
+    });
+  }
+};

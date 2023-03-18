@@ -59,7 +59,6 @@ habitsRegistrationSchema.pre("save", function (next) {
   const dateEnteredMoment = moment
     .utc(this.registrationFinalDate)
     .format("YYYY-MM-DD");
-  console.log(dateEnteredMoment);
 
   //   Creating a date to compare entered date in order to see if it matches the same day in col tz
   const dateToCompareMoment = moment
