@@ -81,19 +81,6 @@ userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
   return false;
 };
 
-// Errase pasword confirm field
-userSchema.post("save", function (error, doc, next) {
-  //   Delete passwordConfirm field
-  console.log(this);
-  this.passwordConfirm = undefined;
-  console.log(`
-  
-  hello world
-  `);
-  console.log(this);
-  next();
-});
-
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
