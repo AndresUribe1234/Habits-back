@@ -10,10 +10,10 @@ router
     authController.protectRoutes,
     registrationController.getAllUserRegistrations
   )
-  .post(authController.protectRoutes, registrationController.createNewHabit)
-  .patch(
+  .post(
     authController.protectRoutes,
-    registrationController.editRegistrationById
+    registrationController.createNewHabit,
+    registrationController.setCurrentStreak
   );
 
 router
@@ -28,7 +28,8 @@ router
   .get(authController.protectRoutes, registrationController.getRegistrationById)
   .patch(
     authController.protectRoutes,
-    registrationController.editRegistrationById
+    registrationController.editRegistrationById,
+    registrationController.setCurrentStreak
   );
 
 router

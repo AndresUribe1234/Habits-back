@@ -18,12 +18,13 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     minLength: 8,
-    required: [true, "User must enter a password!"],
     select: false,
+    required: [true, "User must enter a password!"],
   },
   passwordConfirm: {
     type: String,
     minLength: 8,
+    select: false,
     required: [true, "User must enter a password!"],
   },
   passwordChangedAt: { type: Date },
@@ -79,6 +80,19 @@ userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
   }
   return false;
 };
+
+// Errase pasword confirm field
+userSchema.post("save", function (error, doc, next) {
+  //   Delete passwordConfirm field
+  console.log(this);
+  this.passwordConfirm = undefined;
+  console.log(`
+  
+  hello world
+  `);
+  console.log(this);
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 

@@ -3,7 +3,7 @@ const User = require("../models/userModel");
 const moment = require("moment");
 const tz = require("moment-timezone");
 
-exports.createNewHabit = async (req, res) => {
+exports.createNewHabit = async (req, res, next) => {
   try {
     // 1) Get user id from req object defined on previous middleware, user profile info
     const { _id, habits } = req.user;
@@ -31,10 +31,15 @@ exports.createNewHabit = async (req, res) => {
       userHabitsAchievedDayRegistration,
       registrationFinalDate,
     });
+
+    // 5)Attach registration to req object
+    req.registration = newHabit;
+
+    next();
     // 5) Send response to client
-    res.status(200).json({
-      status: "Success:User habit tracking progress was created!",
-    });
+    // res.status(200).json({
+    //   status: "Success:User habit tracking progress was created!",
+    // });
   } catch (err) {
     res.status(400).json({
       status: "Could not record user habit tracking progress for the day!",
@@ -102,7 +107,7 @@ exports.getRegistrationById = async (req, res) => {
   }
 };
 
-exports.editRegistrationById = async (req, res) => {
+exports.editRegistrationById = async (req, res, next) => {
   try {
     // 1) Get habit entry id and body
     const { id } = req.params;
@@ -112,11 +117,16 @@ exports.editRegistrationById = async (req, res) => {
     // 3) Update registration
     entry.userHabitsAchievedDayRegistration = habits;
     await entry.save();
+
+    // 4)Attach registration to req object
+    req.registration = entry;
+
+    next();
     // 4) Deliver response to client
-    res.status(200).json({
-      status: "Success:Entry updated!",
-      data: { entry },
-    });
+    // res.status(200).json({
+    //   status: "Success:Entry updated!",
+    //   data: { entry },
+    // });
   } catch (err) {
     res.status(400).json({
       status: "Could not fetch data!",
@@ -128,20 +138,37 @@ exports.editRegistrationById = async (req, res) => {
 exports.setCurrentStreak = async (req, res, next) => {
   try {
     // 1)Get user information from req which is created in route protection middleware
-    const { user } = req;
+    const { user, registration } = req;
 
     //2) Extract current date to exclude date from aggregation
-    const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
+    let nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
     const convertedDateForMongoUTC = new Date(nowDateColTz);
 
-    // 3) Get last time a user failed to achieve a 100 completion percentage
+    // 3)Define query operation depending if registration matches current day and has completion status of 100%
+    const checkCurrentDayRegistration = await Registration.findOne({
+      user: user._id,
+      completionPercentage: 1,
+      registrationFinalDate: convertedDateForMongoUTC,
+    });
+
+    let objectMatch = {
+      user: { $eq: user._id },
+      completionPercentage: { $lt: 1 },
+      registrationFinalDate: { $lt: convertedDateForMongoUTC },
+    };
+
+    if (checkCurrentDayRegistration) {
+      objectMatch = {
+        user: { $eq: user._id },
+        completionPercentage: { $lt: 1 },
+        registrationFinalDate: { $lte: convertedDateForMongoUTC },
+      };
+    }
+
+    // 4) Get last time a user failed to achieve a 100 completion percentage
     const userLastFail = await Registration.aggregate([
       {
-        $match: {
-          user: { $eq: user._id },
-          completionPercentage: { $lt: 1 },
-          registrationFinalDate: { $ne: convertedDateForMongoUTC },
-        },
+        $match: objectMatch,
       },
       {
         $group: {
@@ -152,26 +179,41 @@ exports.setCurrentStreak = async (req, res, next) => {
     ]);
 
     const lastFailedDate = userLastFail[0].maxFailedDate;
-    console.log("last failed date", lastFailedDate);
 
-    // 4) Get array from which to calculate current streak
-    const arrayCalculateStreak = await Registration.find({
+    // 5) Define query object for query to gett array from which to calculate current streak
+
+    let queryForArrayToCalculateStreak = {
       user: user._id,
       registrationFinalDate: {
         $gt: lastFailedDate,
         $lt: convertedDateForMongoUTC,
       },
-    }).sort({ registrationFinalDate: -1 });
+    };
+
+    if (checkCurrentDayRegistration) {
+      queryForArrayToCalculateStreak = {
+        user: user._id,
+        registrationFinalDate: {
+          $gt: lastFailedDate,
+          $lte: convertedDateForMongoUTC,
+        },
+      };
+    }
+
+    // 6)Get array from which to calculate current streak
+    const arrayCalculateStreak = await Registration.find(
+      queryForArrayToCalculateStreak
+    ).sort({ registrationFinalDate: -1 });
 
     const datesArray = arrayCalculateStreak.map(
       (ele) => ele.registrationFinalDate
     );
 
-    // 5) Initialize vars to save later, beg of streak could change due to not consecutive registrations
+    // 7) Initialize vars to save later, beg of streak could change due to not consecutive registrations
     let begOfStreak = datesArray[datesArray.length - 1];
     const endOfStreak = datesArray[0];
 
-    // 6) Get beginning and end of win streak
+    // 8) Get beginning and end of win streak
     for (let i = 0; i < datesArray.length; i++) {
       let date = moment.utc(datesArray[i]);
       let dateCompare = moment.utc(datesArray[i + 1]);
@@ -187,17 +229,21 @@ exports.setCurrentStreak = async (req, res, next) => {
           break;
         }
       }
-      console.log(datesArray[i + 1]);
-      console.log(date, dateCompare, dateDiff);
-      console.log(i);
     }
 
-    // 7) Calcultate streka
-    const currentStreak = moment
-      .utc(endOfStreak)
-      .diff(moment.utc(begOfStreak).subtract(1, "d"), "d");
+    // 9) Calcultate streka
+    let currentStreak;
+    if (endOfStreak && begOfStreak) {
+      currentStreak = moment
+        .utc(endOfStreak)
+        .diff(moment.utc(begOfStreak).subtract(1, "d"), "d");
+    }
 
-    // 8)Update user document and registration document
+    if (!endOfStreak && !begOfStreak) {
+      currentStreak = 0;
+    }
+
+    // 10)Update user document and registration document
     const currentUser = await User.findById(user.id).select("+password");
     currentUser.currentStreak = currentStreak;
     currentUser.dateEndCurrentStreak = endOfStreak;
@@ -206,19 +252,15 @@ exports.setCurrentStreak = async (req, res, next) => {
 
     await currentUser.save();
 
-    console.log(currentUser);
+    req.user.currentStreak = currentStreak;
+    req.user.dateEndCurrentStreak = endOfStreak;
+    req.user.dateBeginningCurrentStreak = begOfStreak;
 
-    console.log(endOfStreak, begOfStreak, currentStreak);
-
-    console.log(userLastFail);
-    console.log(datesArray);
+    console.log(req.user);
 
     res.status(200).json({
-      status: "Success:I am a test!",
+      status: "Success:User current streak was updated!",
     });
-
-    // // Streak attached to req object
-    // req.user.currentStreak = streak
     // next();
   } catch (err) {
     console.log(err);
