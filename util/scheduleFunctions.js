@@ -26,10 +26,10 @@ exports.changingStatusEachDay = async () => {
     }
 
     // 4)Update entries
-    entriesToUpdate.forEach(async (ele) => {
+    for (let ele of entriesToUpdate) {
       ele.completionStatus = "Next time you will do better";
       await ele.save();
-    });
+    }
   } catch (err) {
     console.log(err);
   }

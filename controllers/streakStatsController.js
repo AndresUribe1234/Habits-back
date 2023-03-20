@@ -49,7 +49,7 @@ exports.setUserCurrentStreak = async (req, res, next) => {
 
     const lastFailedDate = userLastFail[0] ? userLastFail[0].maxFailedDate : "";
 
-    // 5) Define query object for query to gett array from which to calculate current streak
+    // 5) Define query object for query to get array from which to calculate current streak
 
     let queryForArrayToCalculateStreak = {
       user: user._id,
@@ -140,51 +140,10 @@ exports.setUserCurrentStreak = async (req, res, next) => {
     // 11) Continue to next middleware or send response to client
 
     next();
-
-    // res.status(200).json({
-    //   status: "Success:User current streak was updated!",
-    // });
   } catch (err) {
     console.log(err);
     res.status(400).json({
-      status: "Could not calculate current streak!",
-      err: err.message,
-    });
-  }
-};
-
-exports.setLongestStreak = async (req, res, next) => {
-  try {
-    const { user } = req;
-    // 1)Fetch current user
-    const currentUser = await User.findById(user._id);
-
-    // 2)Check if user has old streak information
-    if (
-      !currentUser.longestStreak ||
-      !currentUser.dateEndLongestStreak ||
-      !currentUser.dateBeginningLongestStreak ||
-      currentUser.longestStreak <= currentUser.currentStreak
-    ) {
-      currentUser.longestStreak = currentUser.currentStreak;
-      currentUser.dateEndLongestStreak = currentUser.dateEndCurrentStreak;
-      currentUser.dateBeginningLongestStreak =
-        currentUser.dateBeginningCurrentStreak;
-      await currentUser.save();
-    }
-
-    // 3)Send response to client
-
-    next();
-
-    // res.status(200).json({
-    //   status: "Success:User longest streak was updated!",
-    // });
-  } catch (err) {
-    console.log(err);
-    res.status(400).json({
-      status: "Could not calculate longest streak!",
-      err: err.message,
+      status: "Could calculate user current streaks!",
     });
   }
 };
@@ -213,10 +172,9 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
 
       await currentRegistration.save();
 
-      console.log("Exit in first condition");
-      console.log(currentRegistration);
+      req.registration = currentRegistration;
 
-      next();
+      return next();
     }
 
     // 3)Define query operation depending if registration day completion status of 100%
@@ -235,7 +193,6 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
       completion !== 1 &&
       upperDateLimit.getTime() === convertedDateForMongoUTC.getTime()
     ) {
-      console.log("Inside block completion NOT 100% and dates =");
       objectMatch = {
         user: { $eq: user._id },
         completionPercentage: { $lt: 1 },
@@ -244,7 +201,6 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
     }
 
     if (conditionQueryOperation) {
-      console.log("Inside block completion 100% and dates =");
       objectMatch = {
         user: { $eq: user._id },
         completionPercentage: { $lt: 1 },
@@ -265,11 +221,9 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
       },
     ]);
 
-    console.log(userLastFail);
-
     const lastFailedDate = userLastFail[0] ? userLastFail[0].maxFailedDate : "";
 
-    // 5) Define query object for query to gett array from which to calculate current streak
+    // 5) Define query object for query to get array from which to calculate current streak
 
     let queryForArrayToCalculateStreak = {
       user: user._id,
@@ -342,7 +296,7 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
       }
     }
 
-    // 9) Calcultate streka
+    // 9) Calcultate strek
     let currentStreak;
     if (endOfStreak && begOfStreak) {
       currentStreak = moment
@@ -354,8 +308,6 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
       currentStreak = 0;
     }
 
-    console.log(begOfStreak, endOfStreak, currentStreak);
-
     // 10)Update user document and registration document
     currentRegistration.currentStreak = currentStreak;
     currentRegistration.dateEndCurrentStreak = endOfStreak;
@@ -365,20 +317,14 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
 
     // Assigne value to recalculate streak
     req.registration = currentRegistration;
-    console.log(currentRegistration);
 
     // 11) Continue to next middleware or send response to client
 
     next();
-
-    // res.status(200).json({
-    //   status: "Success:User current streak for registration was calculated!",
-    // });
   } catch (err) {
     console.log(err);
     res.status(400).json({
-      status: "Could not calculate registration day current streak!",
-      err: err.message,
+      status: "Error:Could not calculate current streak!",
     });
   }
 };
@@ -386,7 +332,7 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
 exports.reCalculateCurrentStreaks = async (req, res, next) => {
   try {
     // 1)Get registration information from req
-    const { registration, user } = req;
+    const { registration } = req;
 
     //2) Extract current date to exclude from comparison if date matches today
     let nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
@@ -396,30 +342,28 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
       registration.registrationFinalDate.getTime() ===
       convertedDateForMongoUTC.getTime()
     ) {
-      console.log("Exit first block");
       return res.status(200).json({
         status: "Success:All current streaks are updated!",
       });
     }
 
     // 3) Get registrations for which current streak need to be re calculated
-    const arrayOfEntrieToCalculate = await Registration.find({
+    const arrayOfEntriesToCalculate = await Registration.find({
       registrationFinalDate: { $gt: registration.registrationFinalDate },
       completionPercentage: 1,
       user: registration.user,
     }).sort({ registrationFinalDate: -1 });
 
     // Start updating each streak
-    if (arrayOfEntrieToCalculate) {
-      arrayOfEntrieToCalculate.forEach(async (ele) => {
+    if (arrayOfEntriesToCalculate) {
+      for (let ele of arrayOfEntriesToCalculate) {
         //4) Get information of each registration
-        const completion = ele.completionPercentage;
         const upperDateLimit = ele.registrationFinalDate;
 
         // 3)Define query operation depending if registration day completion status of 100%
 
         const objectMatch = {
-          user: { $eq: user._id },
+          user: { $eq: ele.user._id },
           completionPercentage: { $lt: 1 },
           registrationFinalDate: { $lte: upperDateLimit },
         };
@@ -429,24 +373,24 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
           {
             $match: objectMatch,
           },
+          { $sort: { registrationFinalDate: -1 } },
           {
             $group: {
               _id: null,
+
               maxFailedDate: { $max: "$registrationFinalDate" },
             },
           },
         ]);
 
-        console.log(userLastFail);
-
         const lastFailedDate = userLastFail[0]
           ? userLastFail[0].maxFailedDate
           : "";
 
-        // 5) Define query object for query to gett array from which to calculate current streak
+        // 5) Define query object for query to get array from which to calculate current streak
 
         let queryForArrayToCalculateStreak = {
-          user: user._id,
+          user: ele.user,
           registrationFinalDate: {
             $gt: lastFailedDate,
             $lte: upperDateLimit,
@@ -456,7 +400,7 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
 
         if (!lastFailedDate) {
           queryForArrayToCalculateStreak = {
-            user: user._id,
+            user: ele.user,
             registrationFinalDate: {
               $lte: upperDateLimit,
             },
@@ -507,7 +451,7 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
           currentStreak = 0;
         }
 
-        console.log(begOfStreak, endOfStreak, currentStreak);
+        console.log("beg,end,streak:", begOfStreak, endOfStreak, currentStreak);
 
         // 10)Update user document and registration document
 
@@ -516,7 +460,7 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
         ele.dateBeginningCurrentStreak = begOfStreak;
 
         await ele.save();
-      });
+      }
     }
 
     res.status(200).json({
@@ -524,6 +468,7 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+
     res.status(400).json({
       status: "Could not update current streaks!",
       err: err.message,

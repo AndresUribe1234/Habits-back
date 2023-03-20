@@ -16,7 +16,6 @@ router
     authController.protectRoutes,
     registrationController.createNewHabit,
     streakStatsController.setUserCurrentStreak,
-    streakStatsController.setLongestStreak,
     streakStatsController.setRegistrationCurrentStreak,
     streakStatsController.reCalculateCurrentStreaks
   );
@@ -34,11 +33,17 @@ router
   .patch(
     authController.protectRoutes,
     registrationController.editRegistrationById,
-    streakStatsController.setUserCurrentStreak,
-    streakStatsController.setLongestStreak,
     streakStatsController.setRegistrationCurrentStreak,
     streakStatsController.reCalculateCurrentStreaks
   );
+
+// .patch(
+//   authController.protectRoutes,
+//   registrationController.editRegistrationById,
+//   streakStatsController.setUserCurrentStreak,
+//   streakStatsController.setRegistrationCurrentStreak,
+//   streakStatsController.reCalculateCurrentStreaks
+// );
 
 router
   .route("/test")

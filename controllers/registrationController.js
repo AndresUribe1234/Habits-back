@@ -33,10 +33,6 @@ exports.createNewHabit = async (req, res, next) => {
     req.registration = newHabit;
 
     next();
-    // 5) Send response to client
-    // res.status(200).json({
-    //   status: "Success:User habit tracking progress was created!",
-    // });
   } catch (err) {
     res.status(400).json({
       status: "Could not record user habit tracking progress for the day!",
@@ -113,20 +109,21 @@ exports.editRegistrationById = async (req, res, next) => {
     const entry = await Registration.findById(id);
     // 3) Update registration
     entry.userHabitsAchievedDayRegistration = habits;
+
     await entry.save();
 
     // 4)Attach registration to req object
     req.registration = entry;
 
-    next();
-    // 4) Deliver response to client
+    // 5)Send response to cliente
     // res.status(200).json({
-    //   status: "Success:Entry updated!",
-    //   data: { entry },
+    //   status: "Success:Entry was updated!",
     // });
+
+    next();
   } catch (err) {
     res.status(400).json({
-      status: "Could not fetch data!",
+      status: "Could not update data!",
       err: err.message,
     });
   }
