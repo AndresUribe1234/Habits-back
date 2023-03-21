@@ -48,8 +48,8 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
     });
 
     if (
-      registrationDayBefore.completionPercentage !== 1 ||
-      !registrationDayBefore
+      registrationDayBefore &&
+      registrationDayBefore.completionPercentage !== 1
     ) {
       currentRegistration.currentStreak = 0;
       currentRegistration.dateBeginningCurrentStreak = upperDateLimit;
@@ -227,9 +227,7 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
       registration.registrationFinalDate.getTime() ===
       convertedDateForMongoUTC.getTime()
     ) {
-      return res.status(200).json({
-        status: "Success:All current streaks are updated!",
-      });
+      return next();
     }
 
     // 3) Get registrations for which current streak need to be re calculated
@@ -262,7 +260,6 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
           {
             $group: {
               _id: null,
-
               maxFailedDate: { $max: "$registrationFinalDate" },
             },
           },
@@ -348,14 +345,86 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
       }
     }
 
-    res.status(200).json({
-      status: "Success:All current streaks are updated!",
-    });
+    next();
+    // res.status(200).json({
+    //   status: "Success:All current streaks are updated!",
+    // });
   } catch (err) {
     console.log(err);
-
     res.status(400).json({
       status: "Could not update current streaks!",
+      err: err.message,
+    });
+  }
+};
+
+exports.calculateCurrentLongestStreakUser = async (req, res, next) => {
+  try {
+    // 1)Get user info
+    const { user } = req;
+
+    // 2)Get longest streak
+    const longestStreak = await Registration.find()
+      .sort({ currentStreak: -1 })
+      .limit(1);
+
+    // 3)Set longest streak info on user document
+
+    const currentUser = await User.findById(user._id);
+    currentUser.longestStreak = longestStreak[0].currentStreak;
+    currentUser.dateBeginningLongestStreak =
+      longestStreak[0].dateBeginningCurrentStreak;
+    currentUser.dateEndLongestStreak = longestStreak[0].dateEndCurrentStreak;
+
+    //4)Get current streak
+    const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
+    const convertedDateForMongoUTC = new Date(nowDateColTz);
+
+    const registrationToday = await Registration.findOne({
+      registrationFinalDate: convertedDateForMongoUTC,
+    });
+    let prevRegistration;
+
+    if (!registrationToday) {
+      const yesterdayDateColTz = moment
+        .utc()
+        .tz("America/Bogota")
+        .subtract(1, "d")
+        .format("YYYY-MM-DD");
+
+      const yesterdayDateForMongo = new Date(yesterdayDateColTz);
+      prevRegistration = await Registration.findOne({
+        registrationFinalDate: yesterdayDateForMongo,
+      });
+    }
+
+    // 5)Set current streak info on user document
+
+    if (registrationToday) {
+      currentUser.currentStreak = registrationToday.currentStreak;
+      currentUser.dateBeginningCurrentStreak =
+        registrationToday.dateBeginningCurrentStreak;
+      currentUser.dateEndCurrentStreak = registrationToday.dateEndCurrentStreak;
+    }
+
+    if (prevRegistration) {
+      currentUser.currentStreak = prevRegistration.currentStreak;
+      currentUser.dateBeginningCurrentStreak =
+        prevRegistration.dateBeginningCurrentStreak;
+      currentUser.dateEndCurrentStreak = prevRegistration.dateEndCurrentStreak;
+    }
+
+    // 6)Save document
+
+    await currentUser.save();
+
+    // 7)Send response to client
+    res.status(200).json({
+      status: "Success:Current streak and longest streak information updated!",
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not update user information!",
       err: err.message,
     });
   }

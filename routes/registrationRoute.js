@@ -16,7 +16,8 @@ router
     authController.protectRoutes,
     registrationController.createNewHabit,
     streakStatsController.setRegistrationCurrentStreak,
-    streakStatsController.reCalculateCurrentStreaks
+    streakStatsController.reCalculateCurrentStreaks,
+    streakStatsController.calculateCurrentLongestStreakUser
   );
 
 router
@@ -33,7 +34,8 @@ router
     authController.protectRoutes,
     registrationController.editRegistrationById,
     streakStatsController.setRegistrationCurrentStreak,
-    streakStatsController.reCalculateCurrentStreaks
+    streakStatsController.reCalculateCurrentStreaks,
+    streakStatsController.calculateCurrentLongestStreakUser
   );
 
 router
