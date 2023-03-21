@@ -1,3 +1,6 @@
+const Registration = require("../models/habitsRegistrationModel");
+const moment = require("moment");
+const tz = require("moment-timezone");
 const User = require(`${__dirname}/../models/userModel`);
 
 exports.getAllUsers = async (req, res) => {
@@ -46,14 +49,7 @@ exports.updateUserProfile = async (req, res) => {
     // 1) Find user to update
     const usertToUpdate = await User.findOne({ email: email });
 
-    //2) User to update and user logged in must be equal
-    if (req.user.email !== usertToUpdate.email) {
-      throw new Error(
-        "User logged in and user requesting update are different!"
-      );
-    }
-
-    //3)Update user profile
+    // 2)Update user profile
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
@@ -65,6 +61,20 @@ exports.updateUserProfile = async (req, res) => {
         runValidators: true,
       }
     );
+
+    // 3)Update habits for registration of the day
+    const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
+    const convertedDateForMongoUTC = new Date(nowDateColTz);
+
+    const currentRegistration = await Registration.findOne({
+      user: req.user._id,
+      registrationFinalDate: convertedDateForMongoUTC,
+    });
+
+    if (currentRegistration) {
+      currentRegistration.userHabitsGoalDayRegistration = habits;
+      await currentRegistration.save();
+    }
 
     // 4) Send okay to client
     res.status(200).json({
