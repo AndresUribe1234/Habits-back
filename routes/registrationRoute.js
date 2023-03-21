@@ -15,7 +15,6 @@ router
   .post(
     authController.protectRoutes,
     registrationController.createNewHabit,
-    streakStatsController.setUserCurrentStreak,
     streakStatsController.setRegistrationCurrentStreak,
     streakStatsController.reCalculateCurrentStreaks
   );
@@ -36,14 +35,6 @@ router
     streakStatsController.setRegistrationCurrentStreak,
     streakStatsController.reCalculateCurrentStreaks
   );
-
-// .patch(
-//   authController.protectRoutes,
-//   registrationController.editRegistrationById,
-//   streakStatsController.setUserCurrentStreak,
-//   streakStatsController.setRegistrationCurrentStreak,
-//   streakStatsController.reCalculateCurrentStreaks
-// );
 
 router
   .route("/test")

@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
 });
 
 // Scheduling a simple task with node cron
-cron.schedule("0 15 0 * * *", scheduleFunctions.changingStatusEachDay, {
+cron.schedule("0 30 * * * *", scheduleFunctions.changingStatusEachDay, {
   timezone: "America/Bogota",
 });
 
