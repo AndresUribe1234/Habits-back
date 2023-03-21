@@ -62,7 +62,7 @@ exports.updateUserProfile = async (req, res) => {
       }
     );
 
-    // 3)Update habits for registration of the day
+    // 3)Check if theres a registration for the current day that needs to be updated
     const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
     const convertedDateForMongoUTC = new Date(nowDateColTz);
 
@@ -71,8 +71,16 @@ exports.updateUserProfile = async (req, res) => {
       registrationFinalDate: convertedDateForMongoUTC,
     });
 
+    // 4)Update habits for registration of the day
+
     if (currentRegistration) {
+      const newAchievedHabits =
+        currentRegistration.userHabitsAchievedDayRegistration.filter((ele) =>
+          habits.includes(ele)
+        );
+      currentRegistration.userHabitsAchievedDayRegistration = newAchievedHabits;
       currentRegistration.userHabitsGoalDayRegistration = habits;
+
       await currentRegistration.save();
     }
 
