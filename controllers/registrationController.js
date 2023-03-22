@@ -1,4 +1,5 @@
 const Registration = require("../models/habitsRegistrationModel");
+const User = require("../models/userModel");
 
 exports.createNewHabit = async (req, res, next) => {
   try {
@@ -124,6 +125,35 @@ exports.editRegistrationById = async (req, res, next) => {
   } catch (err) {
     res.status(400).json({
       status: "Could not update data!",
+      err: err.message,
+    });
+  }
+};
+
+exports.getUniqueHabitsValue = async (req, res, next) => {
+  try {
+    // 1)Unwind habits field in user model (needs to be an array).
+    const uniqueAppHabits = await User.aggregate([
+      { $unwind: "$habits" },
+      { $group: { _id: "$habits", numCountHabits: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, value: "$_id" } },
+    ]);
+
+    // 2)Get array of habits with correct format
+    const arrayWithHabits = uniqueAppHabits.map(
+      (ele) =>
+        ele.value.substr(0, 1).toUpperCase() + ele.value.substr(1).toLowerCase()
+    );
+
+    // 3)Send response to cliente
+    res.status(200).json({
+      status: "Success:Fetched unique habits!",
+      data: { uniqueHabits: arrayWithHabits },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not fetch unique habits!",
       err: err.message,
     });
   }

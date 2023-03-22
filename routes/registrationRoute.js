@@ -39,6 +39,13 @@ router
   );
 
 router
+  .route("/unique-habits")
+  .get(
+    authController.protectRoutes,
+    registrationController.getUniqueHabitsValue
+  );
+
+router
   .route("/test")
   .get(authController.protectRoutes, otherController.testMiddleware);
 
