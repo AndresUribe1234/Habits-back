@@ -10,6 +10,7 @@ router
   .route("/single-user/")
   .get(
     authController.protectRoutes,
+    registrationController.changingStatusRegistration,
     registrationController.getAllUserRegistrations
   )
   .post(
@@ -24,6 +25,7 @@ router
   .route("/")
   .get(
     authController.protectRoutes,
+    registrationController.changingStatusRegistration,
     registrationController.getAllAppRegistrations
   );
 

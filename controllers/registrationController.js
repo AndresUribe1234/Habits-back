@@ -1,5 +1,7 @@
 const Registration = require("../models/habitsRegistrationModel");
 const User = require("../models/userModel");
+const moment = require("moment");
+const tz = require("moment-timezone");
 
 exports.createNewHabit = async (req, res, next) => {
   try {
@@ -154,6 +156,47 @@ exports.getUniqueHabitsValue = async (req, res, next) => {
   } catch (err) {
     res.status(400).json({
       status: "Could not fetch unique habits!",
+      err: err.message,
+    });
+  }
+};
+
+exports.changingStatusRegistration = async (req, res, next) => {
+  try {
+    // 1)Get current day to avoide changing entries in progress
+    const currentDayDate = moment
+      .utc()
+      .tz("America/Bogota")
+      .format("YYYY-MM-DD");
+
+    const currentDayDateJSFormat = new Date(currentDayDate);
+
+    // 2)Find all entries that need to be updated
+    const entriesToUpdate = await Registration.find({
+      completionStatus: "In progress",
+      registrationFinalDate: { $lt: currentDayDateJSFormat },
+    });
+
+    // 3)If theres no entries exit function
+    if (entriesToUpdate.length < 1) {
+      console.log("Theres nothing to update returning from function...");
+      return next();
+    }
+
+    // 4)Update entries
+    for (let ele of entriesToUpdate) {
+      ele.completionStatus = "Next time you will do better";
+      ele.currentStreak = 0;
+      ele.dateBeginningCurrentStreak = registrationFinalDate;
+      ele.dateEndCurrentStreak = registrationFinalDate;
+      await ele.save();
+    }
+
+    next();
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "Could not update registration status habits!",
       err: err.message,
     });
   }
