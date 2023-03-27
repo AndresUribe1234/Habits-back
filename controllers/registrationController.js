@@ -185,10 +185,11 @@ exports.changingStatusRegistration = async (req, res, next) => {
 
     // 4)Update entries
     for (let ele of entriesToUpdate) {
+      console.log(entriesToUpdate);
       ele.completionStatus = "Next time you will do better";
       ele.currentStreak = 0;
-      ele.dateBeginningCurrentStreak = registrationFinalDate;
-      ele.dateEndCurrentStreak = registrationFinalDate;
+      ele.dateBeginningCurrentStreak = ele.registrationFinalDate;
+      ele.dateEndCurrentStreak = ele.registrationFinalDate;
       await ele.save();
     }
 
