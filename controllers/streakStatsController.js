@@ -47,11 +47,30 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
       user: user._id,
     });
 
+    console.log(registration);
+
     if (
       registrationDayBefore &&
-      registrationDayBefore.completionPercentage !== 1
+      registrationDayBefore.completionPercentage !== 1 &&
+      registration.completionPercentage !== 1
     ) {
       currentRegistration.currentStreak = 0;
+      currentRegistration.dateBeginningCurrentStreak = upperDateLimit;
+      currentRegistration.dateEndCurrentStreak = upperDateLimit;
+
+      await currentRegistration.save();
+
+      req.registration = currentRegistration;
+
+      return next();
+    }
+
+    if (
+      registrationDayBefore &&
+      registrationDayBefore.completionPercentage !== 1 &&
+      registration.completionPercentage === 1
+    ) {
+      currentRegistration.currentStreak = 1;
       currentRegistration.dateBeginningCurrentStreak = upperDateLimit;
       currentRegistration.dateEndCurrentStreak = upperDateLimit;
 
@@ -193,6 +212,15 @@ exports.setRegistrationCurrentStreak = async (req, res, next) => {
       currentStreak = 0;
     }
 
+    console.log(
+      "beggining",
+      "end",
+      "current",
+      begOfStreak,
+      endOfStreak,
+      currentStreak
+    );
+
     // 11)Update user document and registration document
     currentRegistration.currentStreak = currentStreak;
     currentRegistration.dateEndCurrentStreak = endOfStreak;
@@ -321,7 +349,7 @@ exports.reCalculateCurrentStreaks = async (req, res, next) => {
           }
         }
 
-        // 9) Calcultate streka
+        // 9) Calcultate streak
         let currentStreak;
         if (endOfStreak && begOfStreak) {
           currentStreak = moment
@@ -364,7 +392,7 @@ exports.calculateCurrentLongestStreakUser = async (req, res, next) => {
     const { user } = req;
 
     // 2)Get longest streak
-    const longestStreak = await Registration.find()
+    const longestStreak = await Registration.find({ user: user._id })
       .sort({ currentStreak: -1 })
       .limit(1);
 
@@ -381,6 +409,7 @@ exports.calculateCurrentLongestStreakUser = async (req, res, next) => {
     const convertedDateForMongoUTC = new Date(nowDateColTz);
 
     const registrationToday = await Registration.findOne({
+      user: user._id,
       registrationFinalDate: convertedDateForMongoUTC,
     });
     let prevRegistration;
@@ -394,6 +423,7 @@ exports.calculateCurrentLongestStreakUser = async (req, res, next) => {
 
       const yesterdayDateForMongo = new Date(yesterdayDateColTz);
       prevRegistration = await Registration.findOne({
+        user: user._id,
         registrationFinalDate: yesterdayDateForMongo,
       });
     }
