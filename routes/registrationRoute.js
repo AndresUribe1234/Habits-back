@@ -10,6 +10,7 @@ router
   .route("/single-user/")
   .get(
     authController.protectRoutes,
+    streakStatsController.setCurrentStreakIfNoPreviousDay,
     registrationController.changingStatusRegistration,
     registrationController.getAllUserRegistrations
   )
@@ -25,6 +26,7 @@ router
   .route("/")
   .get(
     authController.protectRoutes,
+    streakStatsController.setCurrentStreakIfNoPreviousDay,
     registrationController.changingStatusRegistration,
     registrationController.getAllAppRegistrations
   );

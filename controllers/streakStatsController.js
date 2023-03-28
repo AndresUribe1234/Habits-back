@@ -459,3 +459,56 @@ exports.calculateCurrentLongestStreakUser = async (req, res, next) => {
     });
   }
 };
+
+exports.setCurrentStreakIfNoPreviousDay = async (req, res, next) => {
+  try {
+    // 1)Get user from req object
+    const { user } = req;
+
+    // 2)Check if user has registration for the day
+    const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
+    const convertedDateForMongoUTC = new Date(nowDateColTz);
+
+    const currentRegistration = await Registration.findOne({
+      user: user._id,
+      registrationFinalDate: convertedDateForMongoUTC,
+    });
+
+    // 4)If registration exist do nothing and jump to next middleware
+    if (currentRegistration) {
+      return next();
+    }
+
+    // 5)Check if user has a registration for the previous day
+    const yesterdayDateColTz = moment
+      .utc()
+      .tz("America/Bogota")
+      .subtract(1, "d")
+      .format("YYYY-MM-DD");
+    const yesterdayDateForMongo = new Date(yesterdayDateColTz);
+
+    const yesterdayRegistration = await Registration.findOne({
+      user: user._id,
+      registrationFinalDate: yesterdayDateForMongo,
+    });
+    // 6)If theres no registration for previous day set current streak to zero
+
+    if (!yesterdayRegistration) {
+      const currentUser = await User.findById(user._id);
+
+      currentUser.currentStreak = 0;
+      currentUser.dateBeginningCurrentStreak = convertedDateForMongoUTC;
+      currentUser.dateEndCurrentStreak = convertedDateForMongoUTC;
+      await currentUser.save();
+
+      return next();
+    }
+
+    next();
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not update user information!",
+      err: err.message,
+    });
+  }
+};
