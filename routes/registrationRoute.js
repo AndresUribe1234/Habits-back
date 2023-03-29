@@ -51,11 +51,6 @@ router
     registrationController.getUniqueHabitsValue
   );
 
-router
-  .route("/test")
-  .get(
-    authController.protectRoutes,
-    streakStatsController.calculateCurrentLongestStreakAppDaily
-  );
+router.route("/test").get(authController.protectRoutes);
 
 module.exports = router;

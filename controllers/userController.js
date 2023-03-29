@@ -103,27 +103,56 @@ exports.getLeaderboards = async (req, res) => {
     const { user } = req;
 
     // 2)Get top 10 users with highest current streaks
-    const currentTop10 = await User.find()
+    const currentLeaderboards = await User.find()
       .sort({ currentStreak: -1, longestStreak: -1 })
-      .limit(5);
+      .exec();
+
+    const currentModified = currentLeaderboards.map((ele, index) => {
+      const object = { ...ele.toObject() };
+      object.ranking = index + 1;
+      return object;
+    });
 
     // 3)Get top 10 users with highest longest streaks
-    const longestTop10 = await User.find()
-      .sort({ longestStreak: -1, currentStreak: -1 })
-      .limit(5);
+    const longesLeaderboards = await User.find().sort({
+      longestStreak: -1,
+      currentStreak: -1,
+    });
 
-    // 4)Get own ranking
+    const longestModified = longesLeaderboards.map((ele, index) => {
+      const object = { ...ele.toObject() };
+      object.ranking = index + 1;
+      return object;
+    });
 
-    // 5)Get number of users of the app
+    // 4)Get own ranking in current streak
+    const arrayOfIdsCurrent = currentLeaderboards.map((ele) =>
+      ele._id.toString()
+    );
 
-    // 6)Send response to client
+    const rankingCurrent = arrayOfIdsCurrent.indexOf(user._id.toString()) + 1;
+
+    // 5)Get own ranking in longest streak
+
+    const arrayOfIdsLongest = longesLeaderboards.map((ele) =>
+      ele._id.toString()
+    );
+    const rankingLongest = arrayOfIdsLongest.indexOf(user._id.toString()) + 1;
+
+    // 6)Get number of users of the app
+    const numUsersApp = currentLeaderboards.length;
+
+    // 7)Send response to client
 
     res.status(200).json({
       status: "Success: Leaderboards fetched!",
       data: {
         user: user,
-        currentStreakTop10: currentTop10,
-        longestStreakTop10: longestTop10,
+        rankigCurrent: rankingCurrent,
+        rankigLongest: rankingLongest,
+        numUsers: numUsersApp,
+        currentStreakTop10: currentModified.slice(0, 5),
+        longestStreakTop10: longestModified.slice(0, 5),
       },
     });
   } catch (err) {
