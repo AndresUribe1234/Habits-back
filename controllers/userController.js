@@ -110,6 +110,18 @@ exports.getLeaderboards = async (req, res) => {
     const currentModified = currentLeaderboards.map((ele, index) => {
       const object = { ...ele.toObject() };
       object.ranking = index + 1;
+
+      const dateFormatBeg = moment
+        .utc(ele.dateBeginningCurrentStreak)
+        .format("MMM DD, YYYY");
+
+      const dateFormatEnd = moment
+        .utc(ele.dateEndCurrentStreak)
+        .format("MMM DD, YYYY");
+
+      object.currentStreakBegString = dateFormatBeg;
+      object.currentStreakEndString = dateFormatEnd;
+
       return object;
     });
 
@@ -122,6 +134,17 @@ exports.getLeaderboards = async (req, res) => {
     const longestModified = longesLeaderboards.map((ele, index) => {
       const object = { ...ele.toObject() };
       object.ranking = index + 1;
+      const dateFormatBeg = moment
+        .utc(ele.dateBeginningLongestStreak)
+        .format("MMM DD, YYYY");
+
+      const dateFormatEnd = moment
+        .utc(ele.dateEndLongestStreak)
+        .format("MMM DD, YYYY");
+
+      object.longestStreakBegString = dateFormatBeg;
+      object.longestStreakEndString = dateFormatEnd;
+
       return object;
     });
 
