@@ -165,12 +165,23 @@ exports.getLeaderboards = async (req, res) => {
     // 6)Get number of users of the app
     const numUsersApp = currentLeaderboards.length;
 
+    // 7)Get current with correct format of date
+    const currentUser =
+      currentModified[arrayOfIdsCurrent.indexOf(user._id.toString())];
+
+    currentUser.longestStreakBegString = moment
+      .utc(currentUser.dateBeginningLongestStreak)
+      .format("MMM DD, YYYY");
+    currentUser.longestStreakEndString = moment
+      .utc(currentUser.dateEndLongestStreak)
+      .format("MMM DD, YYYY");
+
     // 7)Send response to client
 
     res.status(200).json({
       status: "Success: Leaderboards fetched!",
       data: {
-        user: user,
+        user: currentUser,
         rankigCurrent: rankingCurrent,
         rankigLongest: rankingLongest,
         numUsers: numUsersApp,
