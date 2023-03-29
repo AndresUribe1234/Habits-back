@@ -1,8 +1,8 @@
 const Registration = require("../models/habitsRegistrationModel");
-const Stats = require("./../models/statsModel");
 const User = require("../models/userModel");
 const moment = require("moment");
 const tz = require("moment-timezone");
+const Daily = require("./../models/appDailyModel");
 
 exports.setRegistrationCurrentStreak = async (req, res, next) => {
   try {
@@ -448,7 +448,7 @@ exports.calculateCurrentLongestStreakUser = async (req, res, next) => {
 
     await currentUser.save();
 
-    // 7)Send response to client
+    // 7)Send response to clinete
     res.status(200).json({
       status: "Success:Current streak and longest streak information updated!",
     });
@@ -508,6 +508,80 @@ exports.setCurrentStreakIfNoPreviousDay = async (req, res, next) => {
   } catch (err) {
     res.status(400).json({
       status: "Could not update user information!",
+      err: err.message,
+    });
+  }
+};
+
+exports.calculateCurrentLongestStreakAppDaily = async (req, res, next) => {
+  try {
+    // 1)Check if theres a daily document with today date
+    const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
+    const convertedDateForMongoUTC = new Date(nowDateColTz);
+
+    const checkDaily = await Daily.findOne({ date: convertedDateForMongoUTC });
+
+    // 2)If theres a task jump to next middleware
+    if (checkDaily) {
+      console.log(
+        "Daily user profile update already done, leaving middleware..."
+      );
+      return next();
+    }
+
+    // 3)If theres no daily it means user collection has not been updated so proceed to update
+    const allUsers = await User.find();
+
+    if (!checkDaily) {
+      console.log("Updating user profiles...");
+      for (let ele of allUsers) {
+        //   4)Check if user has a registration for today
+        const currentRegistration = await Registration.findOne({
+          user: ele._id,
+          registrationFinalDate: convertedDateForMongoUTC,
+        });
+
+        // 5)If thats the case update user profile streak
+        if (currentRegistration) {
+          ele.currentStreak = currentRegistration.currentStreak;
+          ele.dateBeginningCurrentStreak =
+            currentRegistration.dateBeginningCurrentStreak;
+          ele.dateEndCurrentStreak = currentRegistration.dateEndCurrentStreak;
+
+          await ele.save();
+        }
+
+        // 5)Check if user has a registration for the previous day
+        const yesterdayDateColTz = moment
+          .utc()
+          .tz("America/Bogota")
+          .subtract(1, "d")
+          .format("YYYY-MM-DD");
+        const yesterdayDateForMongo = new Date(yesterdayDateColTz);
+
+        const yesterdayRegistration = await Registration.findOne({
+          user: ele._id,
+          registrationFinalDate: yesterdayDateForMongo,
+        });
+
+        // 6)If theres no registration for previous day set current streak to zero
+        if (!yesterdayRegistration && !currentRegistration) {
+          ele.currentStreak = 0;
+          ele.dateBeginningCurrentStreak = convertedDateForMongoUTC;
+          ele.dateEndCurrentStreak = convertedDateForMongoUTC;
+
+          await ele.save();
+        }
+      }
+      // 7)Create daily so middleware does not repeat on next api route call
+      const newDaily = await Daily.create({ date: convertedDateForMongoUTC });
+    }
+
+    // 8)Jump to next middleware
+    next();
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not update users information!",
       err: err.message,
     });
   }

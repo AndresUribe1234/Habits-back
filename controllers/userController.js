@@ -96,3 +96,40 @@ exports.updateUserProfile = async (req, res) => {
       .json({ status: "Could not update user profile!", err: err.message });
   }
 };
+
+exports.getLeaderboards = async (req, res) => {
+  try {
+    // 1) Get current user
+    const { user } = req;
+
+    // 2)Get top 10 users with highest current streaks
+    const currentTop10 = await User.find()
+      .sort({ currentStreak: -1, longestStreak: -1 })
+      .limit(5);
+
+    // 3)Get top 10 users with highest longest streaks
+    const longestTop10 = await User.find()
+      .sort({ longestStreak: -1, currentStreak: -1 })
+      .limit(5);
+
+    // 4)Get own ranking
+
+    // 5)Get number of users of the app
+
+    // 6)Send response to client
+
+    res.status(200).json({
+      status: "Success: Leaderboards fetched!",
+      data: {
+        user: user,
+        currentStreakTop10: currentTop10,
+        longestStreakTop10: longestTop10,
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(400)
+      .json({ status: "Could not fetch leaderboards!", err: err.message });
+  }
+};

@@ -15,4 +15,10 @@ router.post("/signup", authController.signup);
 
 router.post("/login", authController.login);
 
+router.get(
+  "/get-leaderboards",
+  authController.protectRoutes,
+  userController.getLeaderboards
+);
+
 module.exports = router;

@@ -10,6 +10,7 @@ router
   .route("/single-user/")
   .get(
     authController.protectRoutes,
+    streakStatsController.calculateCurrentLongestStreakAppDaily,
     streakStatsController.setCurrentStreakIfNoPreviousDay,
     registrationController.changingStatusRegistration,
     registrationController.getAllUserRegistrations
@@ -26,6 +27,7 @@ router
   .route("/")
   .get(
     authController.protectRoutes,
+    streakStatsController.calculateCurrentLongestStreakAppDaily,
     streakStatsController.setCurrentStreakIfNoPreviousDay,
     registrationController.changingStatusRegistration,
     registrationController.getAllAppRegistrations
@@ -51,6 +53,9 @@ router
 
 router
   .route("/test")
-  .get(authController.protectRoutes, otherController.testMiddleware);
+  .get(
+    authController.protectRoutes,
+    streakStatsController.calculateCurrentLongestStreakAppDaily
+  );
 
 module.exports = router;
