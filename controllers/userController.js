@@ -119,8 +119,8 @@ exports.getLeaderboards = async (req, res) => {
         .utc(ele.dateEndCurrentStreak)
         .format("MMM DD, YYYY");
 
-      object.currentStreakBegString = dateFormatBeg;
-      object.currentStreakEndString = dateFormatEnd;
+      object.streakBegString = dateFormatBeg;
+      object.streakEndString = dateFormatEnd;
 
       return object;
     });
@@ -142,8 +142,8 @@ exports.getLeaderboards = async (req, res) => {
         .utc(ele.dateEndLongestStreak)
         .format("MMM DD, YYYY");
 
-      object.longestStreakBegString = dateFormatBeg;
-      object.longestStreakEndString = dateFormatEnd;
+      object.streakBegString = dateFormatBeg;
+      object.streakEndString = dateFormatEnd;
 
       return object;
     });
@@ -166,14 +166,19 @@ exports.getLeaderboards = async (req, res) => {
     const numUsersApp = currentLeaderboards.length;
 
     // 7)Get current with correct format of date
-    const currentUser =
-      currentModified[arrayOfIdsCurrent.indexOf(user._id.toString())];
+    const currentUser = { ...user.toObject() };
 
     currentUser.longestStreakBegString = moment
       .utc(currentUser.dateBeginningLongestStreak)
       .format("MMM DD, YYYY");
     currentUser.longestStreakEndString = moment
       .utc(currentUser.dateEndLongestStreak)
+      .format("MMM DD, YYYY");
+    currentUser.currentStreakBegString = moment
+      .utc(currentUser.dateBeginningCurrentStreak)
+      .format("MMM DD, YYYY");
+    currentUser.currenttStreakEndString = moment
+      .utc(currentUser.dateEndCurrentStreak)
       .format("MMM DD, YYYY");
 
     // 7)Send response to client
