@@ -2,6 +2,7 @@ const Registration = require("../models/habitsRegistrationModel");
 const moment = require("moment");
 const tz = require("moment-timezone");
 const User = require(`${__dirname}/../models/userModel`);
+const sgMail = require("@sendgrid/mail");
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -199,5 +200,28 @@ exports.getLeaderboards = async (req, res) => {
     res
       .status(400)
       .json({ status: "Could not fetch leaderboards!", err: err.message });
+  }
+};
+
+exports.sendEmail = async (req, res) => {
+  try {
+    sgMail.setApiKey(process.env.API_KEY_SENDGRID);
+
+    const message = {
+      to: "anduri1997@gmail.com",
+      from: { name: "Habittus", email: "habittusdev@gmail.com" },
+      subject: "Hello from sendgrid",
+      text: "Hello from sendgrid!",
+      html: "<h1>Hello from sendgrid!</h1>",
+    };
+
+    await sgMail.send(message);
+
+    res.status(200).json({ status: "Email was sent!" });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(400)
+      .json({ status: "Email could not be send!", err: err.message });
   }
 };

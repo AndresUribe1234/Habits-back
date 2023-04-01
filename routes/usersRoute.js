@@ -21,4 +21,16 @@ router.get(
   userController.getLeaderboards
 );
 
+router.post(
+  "/account/change-email",
+  authController.protectRoutes,
+  authController.changeEmail
+);
+
+router.post(
+  "/account/validate-token",
+  authController.protectRoutes,
+  authController.changeEmailPostToken
+);
+
 module.exports = router;

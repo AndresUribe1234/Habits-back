@@ -5,6 +5,7 @@ const authController = require(`${__dirname}/../controllers/authController`);
 const registrationController = require(`${__dirname}/../controllers/registrationController`);
 const streakStatsController = require(`${__dirname}/../controllers/streakStatsController`);
 const otherController = require(`${__dirname}/../controllers/otherController`);
+const userController = require(`${__dirname}/../controllers/userController`);
 
 router
   .route("/single-user/")
@@ -51,6 +52,8 @@ router
     registrationController.getUniqueHabitsValue
   );
 
-router.route("/test").get(authController.protectRoutes);
+router
+  .route("/test")
+  .get(authController.protectRoutes, userController.sendEmail);
 
 module.exports = router;

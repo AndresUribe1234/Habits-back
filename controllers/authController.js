@@ -1,6 +1,8 @@
 const User = require(`${__dirname}/../models/userModel`);
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
+const crypto = require("crypto");
+const sgMail = require("@sendgrid/mail");
 
 const signToken = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -113,5 +115,139 @@ exports.protectRoutes = async (req, res, next) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ status: "Route access denied!", err: err.message });
+  }
+};
+
+exports.changeEmail = async (req, res) => {
+  try {
+    const { password, newEmail } = req.body;
+    const email = req.user.email.trim();
+
+    // 1) Check if email and pasword exist
+    if (!email || !password || !newEmail) {
+      throw new Error("User did not entered all the required fields!");
+    }
+
+    // 2) Check if user exists and password is correct
+    const userToChangeEmail = await User.findOne({ email: email }).select(
+      "+password"
+    );
+
+    if (!userToChangeEmail) throw new Error("Incorrect user or password!");
+
+    const correct = await userToChangeEmail.correctPassword(
+      userToChangeEmail.password,
+      password
+    );
+
+    if (!userToChangeEmail || !correct) {
+      throw new Error("Incorrect user or password!");
+    }
+
+    // 4)Check if theres another user with the new email requested
+
+    const allUsers = await User.find();
+    const arrayOfUsers = allUsers.map((ele) => ele.email);
+
+    if (arrayOfUsers.includes(newEmail)) {
+      throw new Error(
+        "Theres already another user with the email you are trying to use!"
+      );
+    }
+
+    // 5)Create validation token and fields in user colection
+    const verificationToken = crypto.randomBytes(12).toString("hex");
+
+    // 6)Modify user document
+    userToChangeEmail.newEmailRequest = newEmail;
+    userToChangeEmail.verificationToken = verificationToken;
+    await userToChangeEmail.save();
+
+    // 5)Send verification token to new email
+    sgMail.setApiKey(process.env.API_KEY_SENDGRID);
+
+    const message = {
+      to: `${newEmail}`,
+      from: { name: "Habittus", email: "habittusdev@gmail.com" },
+      subject: "New email verification token",
+      text: `Hello ${req.user.name},
+
+      We have received a request to update the email address associated with your account at Habittus. To verify your new email address, please enter the following verification token on our app:
+      
+      Verification Token: ${verificationToken}
+      
+      Thank you,
+      Habittus Team`,
+      html: `
+      <div>
+        <h3>Hello ${req.user.name},</h3>
+        <p>We have received a request to update the email address associated with your account at Habittus. To verify your new email address, please enter the following verification token on our app:</p>
+        <p>Verification Token: ${verificationToken}</p>
+        <p>Thank you,</p>
+        <p>Habittus Team,</p>
+      </div>
+      `,
+    };
+
+    await sgMail.send(message);
+
+    // 5)Send okay to client
+    res.status(200).json({
+      status: "Success:New email verification token sent!",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "New email verification token could not be sent!",
+      err: err.message,
+    });
+  }
+};
+
+exports.changeEmailPostToken = async (req, res) => {
+  try {
+    // 1)Get user email
+    const email = req.user.email;
+
+    const token = req.body.verificationToken;
+
+    if (!token) throw new Error("Token was not submitted!");
+
+    // 2) Check if user exists and password is correct
+    const userToChangeEmail = await User.findOne({ email: email });
+
+    if (!userToChangeEmail) throw new Error("Incorrect email!");
+
+    // 3)Check if token is correct
+    const correct = await userToChangeEmail.correctToken(
+      userToChangeEmail.verificationToken,
+      token
+    );
+
+    // 4) Incorrect token
+    if (!correct) {
+      throw new Error("Incorrect token!");
+    }
+
+    // 5)If token was correct update user information
+    const changeToken = crypto.randomBytes(12).toString("hex");
+
+    if (correct) {
+      console.log("entered");
+      userToChangeEmail.email = userToChangeEmail.newEmailRequest;
+      userToChangeEmail.verificationToken = changeToken;
+      await userToChangeEmail.save();
+
+      // 5)Send response to client
+      res.status(200).json({
+        status: "Success:Email was changed!",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "Verification token is not valid!",
+      err: err.message,
+    });
   }
 };

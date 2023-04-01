@@ -40,6 +40,17 @@ const userSchema = new mongoose.Schema({
   longestStreak: Number,
   dateEndLongestStreak: Date,
   dateBeginningLongestStreak: Date,
+  newEmailRequest: {
+    type: String,
+    unique: true,
+    lowercase: true,
+    validate: {
+      validator: validator.isEmail,
+      message: "Input needs to be an email",
+    },
+    trim: true,
+  },
+  verificationToken: { type: String, unique: true },
 });
 
 // Crypt password
@@ -53,12 +64,27 @@ userSchema.pre("save", async function cryptPassword(next) {
   next();
 });
 
-// Correct passwrod function, returns true if same
+// Correct password function, returns true if same
 userSchema.methods.correctPassword = async function (
   dbPassword,
   enteredPassword
 ) {
   return await bcrypt.compare(enteredPassword, dbPassword);
+};
+
+// Crypt verification token
+userSchema.pre("save", async function cryptVerification(next) {
+  // Check so this ONLY runs when making a change to the password. This guard clause returns if other field is being modified.
+  if (!this.isModified("verificationToken")) return next();
+  //   Hash de password with cost of 12
+  this.verificationToken = await bcrypt.hash(this.verificationToken, 12);
+
+  next();
+});
+
+// Correct verification token function, returns true if same
+userSchema.methods.correctToken = async function (dbToken, enteredToken) {
+  return await bcrypt.compare(enteredToken, dbToken);
 };
 
 // Changes duplicate email error message
