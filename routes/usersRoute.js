@@ -33,4 +33,10 @@ router.post(
   authController.changeEmailPostToken
 );
 
+router.patch(
+  "/account/change-password",
+  authController.protectRoutes,
+  authController.changePassword
+);
+
 module.exports = router;

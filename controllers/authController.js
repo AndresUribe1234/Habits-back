@@ -233,7 +233,6 @@ exports.changeEmailPostToken = async (req, res) => {
     const changeToken = crypto.randomBytes(12).toString("hex");
 
     if (correct) {
-      console.log("entered");
       userToChangeEmail.email = userToChangeEmail.newEmailRequest;
       userToChangeEmail.verificationToken = changeToken;
       await userToChangeEmail.save();
@@ -247,6 +246,62 @@ exports.changeEmailPostToken = async (req, res) => {
     console.log(err);
     res.status(400).json({
       status: "Verification token is not valid!",
+      err: err.message,
+    });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    // 1)Get user email
+    const email = req.user.email;
+
+    const { newPassword, currentPassword, confirmCurrentPassword } = req.body;
+
+    if (!newPassword || !currentPassword || !confirmCurrentPassword) {
+      throw new Error("Information was not submitted!");
+    }
+
+    if (currentPassword !== confirmCurrentPassword) {
+      throw new Error(
+        "Current password and confirm current password do not match!"
+      );
+    }
+
+    // 2) Check if user exists and password is correct
+    const userToChangePassword = await User.findOne({ email: email }).select(
+      "+password"
+    );
+
+    if (!userToChangePassword) throw new Error("Use does not exist!");
+
+    // 3)Check if token is correct
+    const correct = await userToChangePassword.correctPassword(
+      userToChangePassword.password,
+      currentPassword
+    );
+
+    // 4) Incorrect token
+    if (!correct) {
+      throw new Error("Incorrect password!");
+    }
+
+    // 5)If password was correct update user information
+
+    if (correct) {
+      userToChangePassword.password = newPassword;
+
+      await userToChangePassword.save();
+
+      // 5)Send response to client
+      res.status(200).json({
+        status: "Success:Password was changed!",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "Failed: Password coult not be changed!",
       err: err.message,
     });
   }
