@@ -202,3 +202,25 @@ exports.changingStatusRegistration = async (req, res, next) => {
     });
   }
 };
+
+exports.getAllUserRegistrationsById = async (req, res) => {
+  try {
+    // 1) Get user id
+    const { id: _id } = req.params;
+
+    // 2) Find all user entries
+    const allRegistrations = await Registration.find({ user: _id }).sort({
+      registrationFinalDate: -1,
+    });
+    // 3) Send data to client
+    res.status(200).json({
+      status: "Success:All user habits tracking entries where fetched!",
+      data: { entries: allRegistrations },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "Could not fetch data!",
+      err: err.message,
+    });
+  }
+};

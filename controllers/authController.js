@@ -95,15 +95,18 @@ exports.createAccountPostToken = async (req, res) => {
     if (!email) throw new Error("Email was not submitted!");
 
     // 2) Check if user exists and password is correct
-    const userToVerifyAccount = await User.findOne({
+    const userToVerifyAccount = await User.find({
       temporalEmailBeforeVerification: email,
-    });
+    }).sort({ userCreationDate: -1 });
 
-    if (!userToVerifyAccount) throw new Error("Incorrect email!");
+    if (!userToVerifyAccount[0]) throw new Error("Incorrect email!");
+
+    const idUser = userToVerifyAccount[0]._id;
+    const userToVerify = await User.findById(idUser);
 
     // 3)Check if token is correct
-    const correct = await userToVerifyAccount.correctToken(
-      userToVerifyAccount.verificationToken,
+    const correct = await userToVerify.correctToken(
+      userToVerify.verificationToken,
       token
     );
 
@@ -116,18 +119,18 @@ exports.createAccountPostToken = async (req, res) => {
     const changeToken = crypto.randomBytes(12).toString("hex");
 
     if (correct) {
-      userToVerifyAccount.email = email;
-      userToVerifyAccount.verificationToken = changeToken;
-      userToVerifyAccount.accountVerified = true;
-      await userToVerifyAccount.save();
+      userToVerify.email = email;
+      userToVerify.verificationToken = changeToken;
+      userToVerify.accountVerified = true;
+      await userToVerify.save();
     }
     // 4)Create jwt
-    const loginToken = signToken(userToVerifyAccount._id);
+    const loginToken = signToken(userToVerify._id);
 
     res.status(200).json({
       status: "Success:Your account was created!",
       token: loginToken,
-      data: { user: userToVerifyAccount },
+      data: { user: userToVerify },
     });
   } catch (err) {
     res

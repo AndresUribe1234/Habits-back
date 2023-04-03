@@ -11,6 +11,10 @@ router
   .get(authController.protectRoutes, userController.getUserById)
   .post(authController.protectRoutes, userController.updateUserProfile);
 
+router
+  .route("/profile/id/:userId")
+  .get(authController.protectRoutes, userController.getUserByIdParams);
+
 router.post("/signup", authController.signup);
 router.post("/signup/post-token", authController.createAccountPostToken);
 

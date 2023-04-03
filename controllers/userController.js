@@ -203,25 +203,24 @@ exports.getLeaderboards = async (req, res) => {
   }
 };
 
-exports.sendEmail = async (req, res) => {
+exports.getUserByIdParams = async (req, res) => {
   try {
-    sgMail.setApiKey(process.env.API_KEY_SENDGRID);
+    // 1) Get unique identifier of user
+    const { userId } = req.params;
 
-    const message = {
-      to: "anduri1997@gmail.com",
-      from: { name: "Habittus", email: "habittusdev@gmail.com" },
-      subject: "Hello from sendgrid",
-      text: "Hello from sendgrid!",
-      html: "<h1>Hello from sendgrid!</h1>",
-    };
+    // 2)Check if user exist
+    const userRequested = await User.findById(userId);
+    if (!userRequested) {
+      throw new Error("User does not exist!");
+    }
 
-    await sgMail.send(message);
-
-    res.status(200).json({ status: "Email was sent!" });
+    // 3)Return user
+    res.status(200).json({
+      status: "Success:User requested was fetched!",
+      data: { user: userRequested },
+    });
   } catch (err) {
     console.log(err);
-    res
-      .status(400)
-      .json({ status: "Email could not be send!", err: err.message });
+    res.status(400).json({ status: "Could not fetch user!", err: err.message });
   }
 };

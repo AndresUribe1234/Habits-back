@@ -46,6 +46,13 @@ router
   );
 
 router
+  .route("/single-user/:id")
+  .get(
+    authController.protectRoutes,
+    registrationController.getAllUserRegistrationsById
+  );
+
+router
   .route("/unique-habits")
   .get(
     authController.protectRoutes,
