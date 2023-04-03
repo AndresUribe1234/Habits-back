@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema({
       message: "Input needs to be an email",
     },
     trim: true,
-    required: [true, "User must enter a password!"],
   },
   name: String,
   password: {
@@ -51,6 +50,16 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
   verificationToken: { type: String, unique: true },
+  temporalEmailBeforeVerification: {
+    type: String,
+    lowercase: true,
+    validate: {
+      validator: validator.isEmail,
+      message: "Input needs to be an email",
+    },
+    trim: true,
+  },
+  accountVerified: { type: Boolean, default: false },
 });
 
 // Crypt password

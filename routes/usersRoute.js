@@ -39,4 +39,6 @@ router.patch(
   authController.changePassword
 );
 
+router.post("/signup/post-token", authController.createAccountPostToken);
+
 module.exports = router;

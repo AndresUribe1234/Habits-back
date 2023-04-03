@@ -26,19 +26,113 @@ exports.signup = async (req, res) => {
       );
     }
 
-    // 3)Create user
-    const newUser = await User.create({ email, password, passwordConfirm });
+    const allUsers = await User.find();
+    const emailArray = allUsers.map((ele) => ele.email);
 
-    // 4)Create jwt
-    const token = signToken(newUser._id);
+    // 3)Check if email already exist in existing users
+    if (emailArray.includes(email)) {
+      throw new Error("User with this email already exist!");
+    }
+
+    // 4)Create validation token and fields in user colection
+    const verificationToken = crypto.randomBytes(12).toString("hex");
+
+    // 5)Send verification token email
+    sgMail.setApiKey(process.env.API_KEY_SENDGRID);
+
+    const message = {
+      to: `${email}`,
+      from: { name: "Habittus", email: "habittusdev@gmail.com" },
+      subject: "Verify your Habittus account",
+      text: `
+      Thank you for creating an account with Habittus. To ensure the security of your account, we need to verify your email address.
+
+Please use the following verification token to complete your account setup:
+      
+      Verification Token: ${verificationToken}
+      
+      Thank you,
+      Habittus Team`,
+      html: `
+      <div>
+        <p>Thank you for creating an account with Habittus. To ensure the security of your account, we need to verify your email address.</p>
+        <p>Please use the following verification token to complete your account setup:</p>
+        <p>Verification Token: ${verificationToken}</p>
+        <p>Thank you,</p>
+        <p>Habittus Team,</p>
+      </div>
+      `,
+    };
+
+    await sgMail.send(message);
+    // console.log(verificationToken);
+
+    // 3)Create user
+    const newUser = await User.create({
+      temporalEmailBeforeVerification: email,
+      password,
+      passwordConfirm,
+      email: Math.random() + "@gmail.com",
+      verificationToken,
+    });
 
     res.status(200).json({
-      status: "Success:User was created!",
-      token,
-      data: { user: newUser },
+      status: "Success:Account verification token was sent!",
     });
   } catch (err) {
     res.status(400).json({ status: "User signup failed!", err: err.message });
+  }
+};
+
+exports.createAccountPostToken = async (req, res) => {
+  try {
+    // 1)Get user email
+    const email = req.body.email;
+
+    const token = req.body.verificationToken;
+
+    if (!token) throw new Error("Token was not submitted!");
+    if (!email) throw new Error("Email was not submitted!");
+
+    // 2) Check if user exists and password is correct
+    const userToVerifyAccount = await User.findOne({
+      temporalEmailBeforeVerification: email,
+    });
+
+    if (!userToVerifyAccount) throw new Error("Incorrect email!");
+
+    // 3)Check if token is correct
+    const correct = await userToVerifyAccount.correctToken(
+      userToVerifyAccount.verificationToken,
+      token
+    );
+
+    // 4) Incorrect token
+    if (!correct) {
+      throw new Error("Incorrect token!");
+    }
+
+    // 5)If token was correct update user information
+    const changeToken = crypto.randomBytes(12).toString("hex");
+
+    if (correct) {
+      userToVerifyAccount.email = email;
+      userToVerifyAccount.verificationToken = changeToken;
+      userToVerifyAccount.accountVerified = true;
+      await userToVerifyAccount.save();
+    }
+    // 4)Create jwt
+    const loginToken = signToken(userToVerifyAccount._id);
+
+    res.status(200).json({
+      status: "Success:Your account was created!",
+      token: loginToken,
+      data: { user: userToVerifyAccount },
+    });
+  } catch (err) {
+    res
+      .status(400)
+      .json({ status: "User account creation failed!", err: err.message });
   }
 };
 
