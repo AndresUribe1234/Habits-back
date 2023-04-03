@@ -54,6 +54,6 @@ router
 
 router
   .route("/test")
-  .get(authController.protectRoutes, userController.sendEmail);
+  .get(authController.protectRoutes, otherController.testMiddleware);
 
 module.exports = router;

@@ -12,6 +12,7 @@ router
   .post(authController.protectRoutes, userController.updateUserProfile);
 
 router.post("/signup", authController.signup);
+router.post("/signup/post-token", authController.createAccountPostToken);
 
 router.post("/login", authController.login);
 
@@ -39,6 +40,14 @@ router.patch(
   authController.changePassword
 );
 
-router.post("/signup/post-token", authController.createAccountPostToken);
+router.post(
+  "/account/password-reset/send-token",
+  authController.sendEmailTokenPassword
+);
+
+router.post(
+  "/account/password-reset/new-password",
+  authController.changePasswordPostToken
+);
 
 module.exports = router;

@@ -400,3 +400,124 @@ exports.changePassword = async (req, res) => {
     });
   }
 };
+
+exports.sendEmailTokenPassword = async (req, res) => {
+  try {
+    // 1)Get email from body
+    const { email } = req.body;
+
+    if (!email) {
+      throw new Error("Email was not entered!");
+    }
+
+    // 2)See if an account with this email exist
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error("User with this email does not exist!");
+    }
+
+    // 3)Create token
+    const passwordResetToken = crypto.randomBytes(12).toString("hex");
+
+    // 4)Send verification token email
+    sgMail.setApiKey(process.env.API_KEY_SENDGRID);
+
+    const message = {
+      to: `${email}`,
+      from: { name: "Habittus", email: "habittusdev@gmail.com" },
+      subject: "Password reset Habittus account",
+      text: `
+      We have received a request to reset the password associated with your account at Habittus.
+
+Please use the following verification token to complete the password reset:
+      
+      Verification Token: ${passwordResetToken}
+      
+      Thank you,
+      Habittus Team`,
+      html: `
+      <div>
+        <p>We have received a request to reset the password associated with your account at Habittus.</p>
+        <p>Please use the following verification token to complete the password reset:</p>
+        <p>Verification Token: ${passwordResetToken}</p>
+        <p>Thank you,</p>
+        <p>Habittus Team,</p>
+      </div>
+      `,
+    };
+
+    await sgMail.send(message);
+    // console.log(passwordResetToken);
+
+    // 6)Attach token
+    user.verificationToken = passwordResetToken;
+    await user.save();
+
+    // 5)Send okay to client
+    res.status(200).json({
+      status: "Success: Password verification token sent!",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "Failed: Password verification token could not be sent!",
+      err: err.message,
+    });
+  }
+};
+
+exports.changePasswordPostToken = async (req, res) => {
+  try {
+    // 1)Get user email
+    const { email, verificationToken, newPassword, confirmNewPassword } =
+      req.body;
+
+    if (!verificationToken) throw new Error("Token was not submitted!");
+    if (!email) throw new Error("Email was not submitted!");
+    if (!newPassword) throw new Error("New password was not submitted!");
+    if (!confirmNewPassword)
+      throw new Error("Confirm new password was not submitted!");
+
+    // 2) Check if user exists and password is correct
+    const userToChangePassword = await User.findOne({ email: email });
+
+    if (!userToChangePassword) throw new Error("User does not exist!");
+
+    // 3)Check if token is correct
+    const correct = await userToChangePassword.correctToken(
+      userToChangePassword.verificationToken,
+      verificationToken
+    );
+
+    // 4) Incorrect token
+    if (!correct) {
+      throw new Error("Incorrect token!");
+    }
+
+    // 5)Passwords do not match
+    if (newPassword !== confirmNewPassword) {
+      throw new Error("Passwords entered do not match!");
+    }
+
+    // 5)If token was correct update user information
+    const changeToken = crypto.randomBytes(12).toString("hex");
+
+    if (correct) {
+      userToChangePassword.password = newPassword;
+      userToChangePassword.verificationToken = changeToken;
+      await userToChangePassword.save();
+
+      // 5)Send response to client
+      res.status(200).json({
+        status: "Success: Password was changed!",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "Failed: Password could not be changed!",
+      err: err.message,
+    });
+  }
+};
