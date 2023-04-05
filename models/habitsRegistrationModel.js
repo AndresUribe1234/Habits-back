@@ -29,6 +29,7 @@ const habitsRegistrationSchema = new mongoose.Schema({
   currentStreak: Number,
   dateEndCurrentStreak: Date,
   dateBeginningCurrentStreak: Date,
+  dataPreHabittus: Boolean,
 });
 
 // Date creation and modifications timestamps

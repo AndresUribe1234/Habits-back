@@ -68,9 +68,11 @@ exports.getAllUserRegistrations = async (req, res) => {
 exports.getAllAppRegistrations = async (req, res) => {
   try {
     // 1) Find all app entries
-    const allRegistrations = await Registration.find().sort({
-      registrationFinalDate: -1,
-    });
+    const allRegistrations = await Registration.find()
+      .sort({
+        registrationFinalDate: -1,
+      })
+      .limit(100);
     // 3) Send data to client
     res.status(200).json({
       status: "Success:All app user habits tracking entries where fetched!",
