@@ -88,4 +88,4 @@ This project is licensed under the terms of the MIT license. See the [LICENSE](h
 
 ## Contact
 
-If you have any questions or comments about the app, feel free to contact me at [anduri1997@gmail.com](mailto:anduri1997@gmail.com).
+If you have any questions or comments about the app, feel free to contact me at [andres01uribe@gmail.com](mailto:andres01uribe@gmail.com).
