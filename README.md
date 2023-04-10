@@ -37,6 +37,27 @@ To install the back-end code, follow these steps:
 
 Note: The app requires a front-end code to work properly. Please refer to the [Habits Front-end](https://github.com/AndresUribe1234/Habits-front) repository for more information.
 
+## Usage
+
+To use the API, follow these steps:
+
+1. Make sure that the MongoDB database is running.
+2. Set the necessary environment variables in a `config.env` file:
+
+   - `PORT`: The port number where the API should listen for requests.
+   - `USERNAME`: The username for the MongoDB database.
+   - `PASSWORD`: The password for the MongoDB database.
+   - `DATABASE_PASSWORD`: The password for the MongoDB database.
+   - `DATABASE_USERNAME`: The username for the MongoDB database.
+   - `DATABASE`: The URL for the MongoDB database.
+   - `DATABASE_NAME`: The name of the MongoDB database.
+   - `JWT_SECRET`: The secret key for JWT authentication.
+   - `JWT_EXPIRES_IN`: The time (in seconds) for JWT token to expire.
+   - `JWT_COOKIE_EXPIRES_IN`: The time (in seconds) for JWT cookie to expire.
+   - `API_KEY_SENDGRID`: The API key for SendGrid email service.
+
+3. Run the API: `npm start`.
+
 ## API Routes
 
 ### Users
@@ -70,12 +91,12 @@ Note: The app requires a front-end code to work properly. Please refer to the [H
 
 ## Production Environment
 
-The app is live and running on the production environment.
+The app is live at https://habits-back-three.vercel.app/ and is running in the production environment.
 
 ## License
 
-This project is licensed under the terms of the MIT license. See the [LICENSE](https://github.com/AndresUribe1234/Habits-back/blob/main/LICENSE.txt) file for more information.
+This project is licensed under the terms of the MIT license. See the [LICENSE.txt](https://github.com/AndresUribe1234/Habits-back/blob/main/LICENSE.txt) file for more information.
 
 ## Contact
 
-If you have any questions or
+If you have any questions or comments about the app, feel free to contact me at [anduri1997@gmail.com](mailto:anduri1997@gmail.com).
