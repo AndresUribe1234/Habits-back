@@ -10,21 +10,10 @@ This project is very important to me because I have been tracking my habits for 
 
 The app has the following features:
 
-### Habit Tracking
-
-Users can create habits and track their progress over time.
-
-### Insights
-
-The app provides insights on users' habits, such as streaks, success rates, and most common habits.
-
-### Motivation
-
-The app displays users' progress in a way that helps them stay motivated and continue developing their habits.
-
-### User Accounts
-
-Users can create accounts and save their habits and progress.
+- Habit tracking: Users can create habits and track their progress over time.
+- Insights: The app provides insights on users' habits, such as streaks, success rates, and most common habits.
+- Motivation: The app displays users' progress in a way that helps them stay motivated and continue developing their habits.
+- User accounts: Users can create accounts and save their habits and progress.
 
 ## Installation
 
@@ -95,7 +84,7 @@ The app is live at https://habits-back-three.vercel.app/ and is running in the p
 
 ## License
 
-This project is licensed under the terms of the MIT license. See the [LICENSE.txt](https://github.com/AndresUribe1234/Habits-back/blob/main/LICENSE.txt) file for more information.
+This project is licensed under the terms of the MIT license. See the [LICENSE](https://github.com/AndresUribe1234/Habits-back/blob/main/license.txt) file for more information.
 
 ## Contact
 
