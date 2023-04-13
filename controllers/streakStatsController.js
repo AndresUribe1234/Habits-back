@@ -535,6 +535,7 @@ exports.calculateCurrentLongestStreakAppDaily = async (req, res, next) => {
     if (!checkDaily) {
       console.log("Updating user profiles...");
       for (let ele of allUsers) {
+        console.log("User being updated", ele.name);
         //   4)Check if user has a registration for today
         const currentRegistration = await Registration.findOne({
           user: ele._id,
@@ -543,12 +544,15 @@ exports.calculateCurrentLongestStreakAppDaily = async (req, res, next) => {
 
         // 5)If thats the case update user profile streak
         if (currentRegistration) {
+          console.log("User has registration for today");
+          console.log("");
           ele.currentStreak = currentRegistration.currentStreak;
           ele.dateBeginningCurrentStreak =
             currentRegistration.dateBeginningCurrentStreak;
           ele.dateEndCurrentStreak = currentRegistration.dateEndCurrentStreak;
 
           await ele.save();
+          continue;
         }
 
         // 5)Check if user has a registration for the previous day
@@ -564,14 +568,30 @@ exports.calculateCurrentLongestStreakAppDaily = async (req, res, next) => {
           registrationFinalDate: yesterdayDateForMongo,
         });
 
+        if (yesterdayRegistration) {
+          console.log("User has registration for yesterday");
+          console.log("");
+          ele.currentStreak = yesterdayRegistration.currentStreak;
+          ele.dateBeginningCurrentStreak =
+            yesterdayRegistration.dateBeginningCurrentStreak;
+          ele.dateEndCurrentStreak = yesterdayRegistration.dateEndCurrentStreak;
+
+          await ele.save();
+          continue;
+        }
+
         // 6)If theres no registration for previous day set current streak to zero
         if (!yesterdayRegistration && !currentRegistration) {
+          console.log("User has no registration for today or yesterday");
+          console.log("");
           ele.currentStreak = 0;
           ele.dateBeginningCurrentStreak = convertedDateForMongoUTC;
           ele.dateEndCurrentStreak = convertedDateForMongoUTC;
 
           await ele.save();
+          continue;
         }
+        console.log("");
       }
       // 7)Create daily so middleware does not repeat on next api route call
       const newDaily = await Daily.create({ date: convertedDateForMongoUTC });

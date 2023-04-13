@@ -60,6 +60,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
   accountVerified: { type: Boolean, default: false },
+  lastModified: { type: Date },
 });
 
 // Crypt password
@@ -70,6 +71,13 @@ userSchema.pre("save", async function cryptPassword(next) {
   this.password = await bcrypt.hash(this.password, 12);
   //   Delete passwordConfirm field
   this.passwordConfirm = undefined;
+  next();
+});
+
+// Save last time profile was changed
+userSchema.pre("save", async function addModify(next) {
+  //   Add timestamp in UTC
+  this.lastModified = new Date();
   next();
 });
 

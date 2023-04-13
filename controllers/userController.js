@@ -51,17 +51,11 @@ exports.updateUserProfile = async (req, res) => {
     const usertToUpdate = await User.findOne({ email: email });
 
     // 2)Update user profile
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        name,
-        habits,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    if (usertToUpdate) {
+      usertToUpdate.name = name;
+      usertToUpdate.habits = habits;
+      await usertToUpdate.save();
+    }
 
     // 3)Check if theres a registration for the current day that needs to be updated
     const nowDateColTz = moment.utc().tz("America/Bogota").format("YYYY-MM-DD");
@@ -88,7 +82,7 @@ exports.updateUserProfile = async (req, res) => {
     // 4) Send okay to client
     res.status(200).json({
       status: "Success: User profile updated!",
-      data: { user: updatedUser },
+      data: { user: usertToUpdate },
     });
   } catch (err) {
     console.log(err);

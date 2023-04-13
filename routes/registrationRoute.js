@@ -59,8 +59,8 @@ router
     registrationController.getUniqueHabitsValue
   );
 
-// router
-//   .route("/test")
-//   .get(authController.protectRoutes, otherController.testMiddleware);
+router
+  .route("/test")
+  .get(authController.protectRoutes, otherController.updateAllStreaks);
 
 module.exports = router;
