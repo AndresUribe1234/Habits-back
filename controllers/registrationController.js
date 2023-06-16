@@ -52,10 +52,20 @@ exports.getAllUserRegistrations = async (req, res) => {
     const allRegistrations = await Registration.find({ user: _id }).sort({
       registrationFinalDate: -1,
     });
-    // 3) Send data to client
+    // 3) Transform the registrationFinalDate to a formatted string
+    const formattedRegistrations = allRegistrations.map((registration) => {
+      const formattedDate = registration.registrationFinalDate
+        .toISOString()
+        .split("T")[0];
+      return {
+        ...registration.toObject(),
+        registrationDateAsString: formattedDate,
+      };
+    });
+    // 4) Send data to client
     res.status(200).json({
-      status: "Success:All user habits tracking entries where fetched!",
-      data: { entries: allRegistrations },
+      status: "Success: All user registrations were fetched!",
+      data: { entries: formattedRegistrations },
     });
   } catch (err) {
     res.status(400).json({
