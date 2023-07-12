@@ -174,7 +174,7 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ status: "User login failed!", err: err.message });
+    res.status(400).json({ err: err.message });
   }
 };
 
